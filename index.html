@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Irrigation — Live Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<meta name="theme-color" content="#10160F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #10160F;
+    --surface: #1B2419;
+    --surface-2: #212C1F;
+    --border: #2C3829;
+    --text: #EDF1EA;
+    --text-muted: #8B9589;
+    --teal: #4FBFC7;
+    --moss: #6FBF7F;
+    --amber: #E5A855;
+    --purple: #B79BD9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 26px 18px 50px; }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+  header h1 { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+  .status { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--moss); transition: background 0.3s; }
+  .dot.offline { background: #B06262; }
+
+  .bell-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+    border-radius: 8px; padding: 6px 10px; font-size: 11.5px; margin-bottom: 14px;
+    font-family: 'IBM Plex Sans', sans-serif; cursor: pointer;
+  }
+  .bell-btn.on { color: var(--moss); border-color: var(--moss); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 12px;
+  }
+  .stat-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 600; }
+  .stat-value .unit { font-size: 13px; color: var(--text-muted); margin-left: 1px; }
+
+  .pump-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
+    transition: border-color 0.3s;
+  }
+  .pump-card.on { border-color: var(--amber); }
+  .pump-label { font-size: 12.5px; color: var(--text-muted); margin-bottom: 3px; }
+  .pump-state { font-size: 19px; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+  .pump-state.on { color: var(--amber); }
+  .pump-state.off { color: var(--text-muted); }
+  .pump-glow { width: 13px; height: 13px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .pump-glow.on { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+
+  .decision-banner {
+    border-radius: 12px; padding: 15px 18px; margin-bottom: 12px;
+    background: var(--surface-2); border-left: 3px solid var(--teal); transition: border-color 0.3s;
+  }
+  .decision-banner.alert { border-left-color: var(--amber); }
+  .decision-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
+  .decision-text { font-size: 15.5px; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+
+  .ai-card {
+    border-radius: 12px; padding: 15px 18px; margin-bottom: 12px;
+    background: var(--surface-2); border-left: 3px solid var(--purple);
+  }
+  .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .ai-badge {
+    background: var(--purple); color: #241C33; font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 5px; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.02em;
+  }
+  .ai-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
+
+  .trend-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px;
+  }
+  .trend-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; }
+
+  footer { margin-top: 18px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+  @media (max-width: 420px) {
+    .stat-grid { grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+    .stat-value { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Smart Irrigation</h1>
+    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
+  </header>
+
+  <button class="bell-btn" id="bellBtn" onclick="enableNotifications()">🔔 Enable alerts on this device</button>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Soil moisture</div>
+      <div class="stat-value mono" id="moistureVal">—<span class="unit">%</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Temperature</div>
+      <div class="stat-value mono" id="tempVal">—<span class="unit">°C</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Humidity</div>
+      <div class="stat-value mono" id="humidityVal">—<span class="unit">%</span></div>
+    </div>
+  </div>
+
+  <div class="pump-card" id="pumpCard">
+    <div>
+      <div class="pump-label">Pump</div>
+      <div class="pump-state" id="pumpState">—</div>
+    </div>
+    <div class="pump-glow" id="pumpGlow"></div>
+  </div>
+
+  <div class="decision-banner" id="decisionBanner">
+    <div class="decision-label">Live system decision (on-device threshold)</div>
+    <div class="decision-text" id="decisionText">Waiting for data…</div>
+  </div>
+
+  <div class="ai-card" id="aiCard">
+    <div class="ai-header">
+      <span class="ai-badge">AI</span>
+      <span class="decision-label">Penman-Monteith recommendation</span>
+    </div>
+    <div class="decision-text" id="aiRecommendation">Not yet computed</div>
+    <div class="ai-meta" id="aiMeta">Run the Colab script to compute this</div>
+  </div>
+
+  <div class="trend-card">
+    <div class="trend-label">Soil moisture — this session</div>
+    <svg id="trendSvg" width="100%" height="56" viewBox="0 0 600 56" preserveAspectRatio="none"></svg>
+  </div>
+
+  <footer id="lastUpdated">Last updated: —</footer>
+</div>
+
+<script>
+  const FIREBASE_URL = "https://smart-irrigation-fydp-default-rtdb.firebaseio.com";
+  const history = [];
+  const MAX_POINTS = 30;
+  const ALERT_THRESHOLD = 20;
+  const ALERT_COOLDOWN_MS = 5 * 60 * 1000;
+  let lastAlertTime = 0;
+
+  // Register service worker so this qualifies as an installable PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  function updateBellButton() {
+    const btn = document.getElementById('bellBtn');
+    if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+    if (Notification.permission === 'granted') {
+      btn.textContent = '🔔 Alerts enabled on this device';
+      btn.classList.add('on');
+    } else {
+      btn.textContent = '🔔 Enable alerts on this device';
+      btn.classList.remove('on');
+    }
+  }
+
+  function enableNotifications() {
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(updateBellButton);
+  }
+
+  function maybeNotify(moisture) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (moisture >= ALERT_THRESHOLD) return;
+    const now = Date.now();
+    if (now - lastAlertTime < ALERT_COOLDOWN_MS) return;
+    lastAlertTime = now;
+    new Notification('Smart Irrigation — Low Moisture', {
+      body: `Soil moisture is critically low: ${moisture.toFixed(1)}%`,
+      icon: 'icon.png',
+    });
+  }
+
+  async function fetchLatest() {
+    try {
+      const res = await fetch(FIREBASE_URL + "/sensor.json");
+      if (!res.ok) throw new Error("Bad response");
+      const data = await res.json();
+      if (!data) throw new Error("No data yet");
+      updateUI(data);
+      document.getElementById("statusDot").classList.remove("offline");
+      document.getElementById("statusText").textContent = "Live";
+    } catch (e) {
+      document.getElementById("statusDot").classList.add("offline");
+      document.getElementById("statusText").textContent = "Offline";
+    }
+  }
+
+  async function fetchDecision() {
+    try {
+      const res = await fetch(FIREBASE_URL + "/decision.json");
+      const data = await res.json();
+      if (!data) return;
+      const etc = data.etc_mm_per_day !== undefined ? data.etc_mm_per_day + " mm/day" : "";
+      document.getElementById("aiRecommendation").textContent =
+        data.recommendation + (etc ? " · ETc " + etc : "");
+      document.getElementById("aiMeta").textContent = "Computed: " + (data.computed_at || "—");
+    } catch (e) {
+      // AI decision not uploaded yet — leave the placeholder text as-is
+    }
+  }
+
+  function updateUI(data) {
+    const moisture = Number(data.soil_moisture ?? 0);
+    const temp = Number(data.temperature ?? 0);
+    const humidity = Number(data.humidity ?? 0);
+    const pumpOn = data.pump_status === 1 || data.pump_status === true;
+
+    document.getElementById("moistureVal").childNodes[0].nodeValue = moisture.toFixed(1);
+    document.getElementById("tempVal").childNodes[0].nodeValue = temp.toFixed(1);
+    document.getElementById("humidityVal").childNodes[0].nodeValue = humidity.toFixed(1);
+
+    const pumpCard = document.getElementById("pumpCard");
+    const pumpState = document.getElementById("pumpState");
+    const pumpGlow = document.getElementById("pumpGlow");
+    pumpCard.classList.toggle("on", pumpOn);
+    pumpGlow.classList.toggle("on", pumpOn);
+    pumpState.textContent = pumpOn ? "ON" : "OFF";
+    pumpState.classList.toggle("on", pumpOn);
+    pumpState.classList.toggle("off", !pumpOn);
+
+    const needsWater = moisture < 45 || temp > 35 || humidity < 30;
+    const banner = document.getElementById("decisionBanner");
+    banner.classList.toggle("alert", needsWater);
+    document.getElementById("decisionText").textContent = needsWater
+      ? "Conditions need irrigation"
+      : "Conditions are fine, no irrigation needed";
+
+    document.getElementById("lastUpdated").textContent = "Last updated: " + new Date().toLocaleTimeString();
+
+    history.push(moisture);
+    if (history.length > MAX_POINTS) history.shift();
+    drawTrend();
+
+    maybeNotify(moisture);
+  }
+
+  function drawTrend() {
+    const svg = document.getElementById("trendSvg");
+    if (history.length < 2) { svg.innerHTML = ""; return; }
+    const w = 600, h = 56, pad = 6;
+    const max = Math.max(...history, 100);
+    const min = Math.min(...history, 0);
+    const range = Math.max(max - min, 1);
+    const step = (w - pad * 2) / (MAX_POINTS - 1);
+    const startX = w - pad - (history.length - 1) * step;
+    let points = "";
+    history.forEach((v, i) => {
+      const x = startX + i * step;
+      const y = h - pad - ((v - min) / range) * (h - pad * 2);
+      points += x + "," + y + " ";
+    });
+    svg.innerHTML = '<polyline points="' + points.trim() +
+      '" fill="none" stroke="#4FBFC7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  }
+
+  function poll() {
+    fetchLatest();
+    fetchDecision();
+  }
+
+  updateBellButton();
+  poll();
+  setInterval(poll, 5000);
+</script>
+</body>
+</html>
