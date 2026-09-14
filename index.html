@@ -345,5 +345,46 @@ getToken(messaging, {
   onMessage(messaging, (payload) => {
     alert("Smart Irrigation Alert: \n" + payload.notification.body);
   });
+</script><script>
+  // 1. Notification Permission mangna jab app khule
+  if ("Notification" in window) {
+    Notification.requestPermission();
+  }
+
+  // 2. Alarm Sound ke liye audio object
+  const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+  let previousPumpStatus = null;
+
+  // Database se pump_status par nazar rakhna (Frontend Realtime Listener)
+  firebase.database().ref('/sensor/pump_status').on('value', (snapshot) => {
+    const currentStatus = snapshot.val();
+    const timeString = new Date().toLocaleTimeString();
+
+    // Check karein ke pump 0 se 1 (ON) huwa hai ya nahi
+    if (previousPumpStatus === 0 && currentStatus === 1) {
+      
+      // Feature A: Phone Notification pop-up
+      if (Notification.permission === "granted") {
+        new Notification("Smart Irrigation Alert 💧", {
+          body: "Water pump has been turned ON automatically!",
+          icon: "icon.png"
+        });
+      }
+
+      // Feature B: Audio Alert Sound play karna
+      alarmSound.play().catch(e => console.log("Audio play blocked by browser:", e));
+
+      // Feature C: App ke andar history/log update karna
+      addLogToUI(`Pump turned ON at ${timeString}`);
+    }
+
+    previousStatus = currentStatus;
+  });
+
+  // Helper function UI par log dikhane ke liye
+  function addLogToUI(message) {
+    console.log(message);
+  }
 </script>
 </html>
