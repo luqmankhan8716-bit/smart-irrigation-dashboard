@@ -294,5 +294,42 @@
   poll();
   setInterval(poll, 5000);
 </script>
-</body>
+</body><script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoi8LQllyFmUfEl1wyf7RBlNh_iRMk8vs",
+    authDomain: "smart-irrigation-fydp.firebaseapp.com",
+    databaseURL: "https://smart-irrigation-fydp-default-rtdb.firebaseio.com",
+    projectId: "smart-irrigation-fydp",
+    storageBucket: "smart-irrigation-fydp.firebasestorage.app",
+    messagingSenderId: "789342675641",
+    appId: "1:789342675641:web:c6e129b459071863bf7168"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const messaging = getMessaging(app);
+
+  // Notification Permission aur Setup
+  navigator.serviceWorker.register('sw.js').then((registration) => {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        getToken(messaging, { 
+          vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4",
+          serviceWorkerRegistration: registration 
+        }).then((currentToken) => {
+          if (currentToken) {
+            console.log('Push Token Generated Successfully!');
+          }
+        });
+      }
+    });
+  });
+
+  // Jab app open ho aur notification aaye
+  onMessage(messaging, (payload) => {
+    alert("Smart Irrigation Alert: \n" + payload.notification.body);
+  });
+</script>
 </html>
