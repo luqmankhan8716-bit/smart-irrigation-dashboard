@@ -310,7 +310,21 @@
 
   const app = initializeApp(firebaseConfig);
   const messaging = getMessaging(app);
+// Database aur Token save karne ka code
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+const db = getDatabase(app);
 
+getToken(messaging, { 
+  vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4"
+}).then((currentToken) => {
+  if (currentToken) {
+    console.log('Push Token Generated:', currentToken);
+    const tokenKey = currentToken.replace(/[\.#\$\[\]]/g, "_");
+    set(ref(db, 'fcm_tokens/' + tokenKey), true);
+  }
+}).catch((err) => {
+  console.log('An error occurred while retrieving token. ', err);
+});
   // Notification Permission aur Setup
   navigator.serviceWorker.register('sw.js').then((registration) => {
     Notification.requestPermission().then((permission) => {
