@@ -98,14 +98,39 @@
             <p class="text-sm font-bold text-gray-700" id="ui_decision_text">Waiting for sensor data...</p>
         </div>
 
-        <!-- AI Penman-Monteith Recommendation -->
-        <div class="bg-[#F0FDF4] p-4 rounded-2xl shadow-sm border border-green-200 mt-4 relative overflow-hidden">
-            <div class="flex items-center gap-2 mb-2">
-                <span class="bg-[#1C883A] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">AI</span>
-                <p class="text-green-800 text-xs font-bold uppercase">Penman-Monteith Analysis</p>
+        <!-- AI Smart Engine Card (NEW PREMIUM DESIGN) -->
+        <div class="bg-white p-5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-green-100 mt-5 relative overflow-hidden">
+            
+            <!-- Soft glowing background effect -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+            
+            <div class="flex items-center gap-3 mb-3 relative z-10">
+                <div class="bg-gradient-to-br from-green-100 to-green-50 text-green-600 p-2 rounded-xl shadow-inner border border-green-200">
+                    <i class="fa-solid fa-brain text-lg"></i>
+                </div>
+                <div>
+                    <span class="bg-gradient-to-r from-[#1C883A] to-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">AI ENGINE</span>
+                    <p class="text-gray-800 text-[11px] font-bold uppercase tracking-wide mt-0.5">Penman-Monteith Analysis</p>
+                </div>
             </div>
-            <p class="text-sm font-semibold text-green-900" id="ui_ai_text">Not yet computed</p>
-            <p class="text-[10px] text-green-600 mt-2 opacity-70" id="ui_ai_meta">Run the Colab script to compute</p>
+
+            <div class="bg-[#F8FAFC] border border-gray-100 p-3.5 rounded-xl mt-3 relative z-10">
+                <p class="text-[13.5px] font-medium text-gray-700 leading-relaxed" id="ui_ai_text">
+                    Awaiting computational data from server...
+                </p>
+            </div>
+            
+            <div class="flex justify-between items-center mt-4 px-1 relative z-10">
+                <div class="flex items-center gap-2">
+                    <span class="flex items-center gap-1 text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">
+                        <i class="fa-solid fa-cloud-sun-rain"></i> Weather Aware
+                    </span>
+                    <span class="flex items-center gap-1 text-[10px] text-teal-600 font-semibold bg-teal-50 px-1.5 py-0.5 rounded">
+                        <i class="fa-solid fa-cube"></i> Volumetric
+                    </span>
+                </div>
+                <p class="text-[9px] text-gray-400 font-mono" id="ui_ai_meta">Sync: --</p>
+            </div>
         </div>
 
         <p id="ui_last_updated" class="text-center text-xs text-gray-400 mt-4 font-mono">Updating...</p>
@@ -171,9 +196,12 @@
                 const res = await fetch(FIREBASE_URL + "/decision.json");
                 const data = await res.json();
                 if (!data) return;
-                const etc = data.etc_mm_per_day !== undefined ? data.etc_mm_per_day + " mm/day" : "";
-                document.getElementById("ui_ai_text").textContent = data.recommendation + (etc ? " (ETc: " + etc + ")" : "");
-                document.getElementById("ui_ai_meta").textContent = "Last Sync: " + (data.computed_at || "—");
+                
+                // Update AI Box Text
+                document.getElementById("ui_ai_text").textContent = data.recommendation;
+                
+                // Update Last Sync Time
+                document.getElementById("ui_ai_meta").textContent = "Sync: " + (data.computed_at || "—");
             } catch (e) {
                 console.log("Waiting for AI data...");
             }
