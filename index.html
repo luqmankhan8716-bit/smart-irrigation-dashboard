@@ -1,390 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Smart Irrigation — Live Dashboard</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" href="icon.png">
-<meta name="theme-color" content="#10160F">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #10160F;
-    --surface: #1B2419;
-    --surface-2: #212C1F;
-    --border: #2C3829;
-    --text: #EDF1EA;
-    --text-muted: #8B9589;
-    --teal: #4FBFC7;
-    --moss: #6FBF7F;
-    --amber: #E5A855;
-    --purple: #B79BD9;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  h1 { font-family: 'Space Grotesk', sans-serif; margin: 0; }
-  .mono { font-family: 'IBM Plex Mono', monospace; }
-
-  .wrap { max-width: 640px; margin: 0 auto; padding: 26px 18px 50px; }
-
-  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
-  header h1 { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
-  .status { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-muted); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--moss); transition: background 0.3s; }
-  .dot.offline { background: #B06262; }
-
-  .bell-btn {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
-    border-radius: 8px; padding: 6px 10px; font-size: 11.5px; margin-bottom: 14px;
-    font-family: 'IBM Plex Sans', sans-serif; cursor: pointer;
-  }
-  .bell-btn.on { color: var(--moss); border-color: var(--moss); }
-
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px 12px;
-  }
-  .stat-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
-  .stat-value { font-size: 24px; font-weight: 600; }
-  .stat-value .unit { font-size: 13px; color: var(--text-muted); margin-left: 1px; }
-
-  .pump-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
-    transition: border-color 0.3s;
-  }
-  .pump-card.on { border-color: var(--amber); }
-  .pump-label { font-size: 12.5px; color: var(--text-muted); margin-bottom: 3px; }
-  .pump-state { font-size: 19px; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
-  .pump-state.on { color: var(--amber); }
-  .pump-state.off { color: var(--text-muted); }
-  .pump-glow { width: 13px; height: 13px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
-  .pump-glow.on { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
-
-  .decision-banner {
-    border-radius: 12px; padding: 15px 18px; margin-bottom: 12px;
-    background: var(--surface-2); border-left: 3px solid var(--teal); transition: border-color 0.3s;
-  }
-  .decision-banner.alert { border-left-color: var(--amber); }
-  .decision-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; }
-  .decision-text { font-size: 15.5px; font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
-
-  .ai-card {
-    border-radius: 12px; padding: 15px 18px; margin-bottom: 12px;
-    background: var(--surface-2); border-left: 3px solid var(--purple);
-  }
-  .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .ai-badge {
-    background: var(--purple); color: #241C33; font-size: 10px; font-weight: 700;
-    padding: 2px 7px; border-radius: 5px; font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.02em;
-  }
-  .ai-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
-
-  .trend-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px;
-  }
-  .trend-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; }
-
-  footer { margin-top: 18px; font-size: 12px; color: var(--text-muted); text-align: center; }
-
-  @media (max-width: 420px) {
-    .stat-grid { grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
-    .stat-value { font-size: 19px; }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Smart Irrigation — Live Dashboard</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png">
+    <meta name="theme-color" content="#FFFFFF">
+    
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Hide scrollbar for clean app look */
+        ::-webkit-scrollbar { display: none; }
+    </style>
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <h1>Smart Irrigation</h1>
-    <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
-  </header>
+<body class="bg-gray-50 pb-24">
 
-  <button class="bell-btn" id="bellBtn" onclick="enableNotifications()">🔔 Enable alerts on this device</button>
-
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-label">Soil moisture</div>
-      <div class="stat-value mono" id="moistureVal">—<span class="unit">%</span></div>
+    <!-- Top Header -->
+    <div class="bg-[#1C883A] text-white p-5 rounded-b-3xl shadow-md flex justify-between items-center relative overflow-hidden">
+        <!-- Abstract background pattern (Optional for pro look) -->
+        <div class="absolute top-0 right-0 opacity-10">
+            <i class="fa-solid fa-leaf text-8xl -mr-4 -mt-4"></i>
+        </div>
+        
+        <div class="flex items-center gap-3 relative z-10">
+            <div class="bg-white/20 p-2 rounded-lg">
+                <i class="fa-solid fa-leaf text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide">Crop Monitor</h1>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    <span id="ui_status_dot" class="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span id="ui_status_text" class="text-xs text-green-100 font-medium">Connecting...</span>
+                </div>
+            </div>
+        </div>
+        <i class="fa-solid fa-wifi text-xl relative z-10"></i>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Temperature</div>
-      <div class="stat-value mono" id="tempVal">—<span class="unit">°C</span></div>
+
+    <!-- Main Content Area -->
+    <div class="p-5 mt-2 space-y-4 max-w-md mx-auto">
+
+        <!-- Soil Moisture Card -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div class="text-blue-500 text-4xl w-10 text-center"><i class="fa-solid fa-droplet"></i></div>
+            <div class="flex-1">
+                <p class="text-gray-500 text-sm font-medium">Soil Moisture</p>
+                <h2 class="text-3xl font-bold text-gray-800"><span id="ui_moisture">--</span><span class="text-lg text-gray-500">%</span></h2>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-2">
+                    <div id="ui_moisture_bar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temperature Card -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div class="text-orange-500 text-4xl w-10 text-center"><i class="fa-solid fa-temperature-half"></i></div>
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Temperature</p>
+                <h2 class="text-3xl font-bold text-gray-800"><span id="ui_temp">--</span><span class="text-lg text-gray-500">°C</span></h2>
+            </div>
+        </div>
+
+        <!-- Humidity Card -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
+            <div class="text-blue-400 text-4xl w-10 text-center"><i class="fa-solid fa-cloud-rain"></i></div>
+            <div>
+                <p class="text-gray-500 text-sm font-medium">Humidity</p>
+                <h2 class="text-3xl font-bold text-gray-800"><span id="ui_humidity">--</span><span class="text-lg text-gray-500">%</span></h2>
+            </div>
+        </div>
+
+        <!-- Pump Status Button -->
+        <div class="mt-6">
+            <div id="ui_pump_card" class="bg-gray-400 text-white p-4 rounded-xl flex justify-between items-center shadow-sm transition-colors duration-300">
+                <div class="flex items-center gap-3">
+                    <i id="ui_pump_icon" class="fa-solid fa-circle-xmark text-2xl"></i>
+                    <span id="ui_pump_status" class="font-bold text-lg">Irrigation: OFF</span>
+                </div>
+                <i class="fa-solid fa-chevron-right opacity-50"></i>
+            </div>
+        </div>
+
+        <!-- Live System Decision (Local) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-4">
+            <p class="text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-microchip"></i> Local System Decision
+            </p>
+            <p class="text-sm font-bold text-gray-700" id="ui_decision_text">Waiting for sensor data...</p>
+        </div>
+
+        <!-- AI Penman-Monteith Recommendation -->
+        <div class="bg-[#F0FDF4] p-4 rounded-2xl shadow-sm border border-green-200 mt-4 relative overflow-hidden">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-[#1C883A] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">AI</span>
+                <p class="text-green-800 text-xs font-bold uppercase">Penman-Monteith Analysis</p>
+            </div>
+            <p class="text-sm font-semibold text-green-900" id="ui_ai_text">Not yet computed</p>
+            <p class="text-[10px] text-green-600 mt-2 opacity-70" id="ui_ai_meta">Run the Colab script to compute</p>
+        </div>
+
+        <p id="ui_last_updated" class="text-center text-xs text-gray-400 mt-4 font-mono">Updating...</p>
+
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Humidity</div>
-      <div class="stat-value mono" id="humidityVal">—<span class="unit">%</span></div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 w-full bg-white border-t border-gray-100 flex justify-around p-3 pb-5 text-gray-400 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50">
+        <div class="text-center text-[#1C883A]">
+            <i class="fa-solid fa-house text-xl"></i>
+            <p class="text-[10px] font-bold mt-1">Home</p>
+        </div>
+        <div class="text-center" onclick="enableNotifications()">
+            <i class="fa-regular fa-bell text-xl" id="bell_icon"></i>
+            <p class="text-[10px] font-bold mt-1">Alerts</p>
+        </div>
+        <div class="text-center">
+            <i class="fa-solid fa-gear text-xl"></i>
+            <p class="text-[10px] font-bold mt-1">Settings</p>
+        </div>
     </div>
-  </div>
 
-  <div class="pump-card" id="pumpCard">
-    <div>
-      <div class="pump-label">Pump</div>
-      <div class="pump-state" id="pumpState">—</div>
-    </div>
-    <div class="pump-glow" id="pumpGlow"></div>
-  </div>
+    <!-- ========================================== -->
+    <!-- SCRIPT 1: CORE LOGIC, UI UPDATE & ALARMS -->
+    <!-- ========================================== -->
+    <script>
+        const FIREBASE_URL = "https://smart-irrigation-fydp-default-rtdb.firebaseio.com";
+        const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        let previousPumpStatus = null;
 
-  <div class="decision-banner" id="decisionBanner">
-    <div class="decision-label">Live system decision (on-device threshold)</div>
-    <div class="decision-text" id="decisionText">Waiting for data…</div>
-  </div>
+        // Ask for notification permission on load
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
 
-  <div class="ai-card" id="aiCard">
-    <div class="ai-header">
-      <span class="ai-badge">AI</span>
-      <span class="decision-label">Penman-Monteith recommendation</span>
-    </div>
-    <div class="decision-text" id="aiRecommendation">Not yet computed</div>
-    <div class="ai-meta" id="aiMeta">Run the Colab script to compute this</div>
-  </div>
+        function enableNotifications() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    alert(permission === "granted" ? "Alerts enabled!" : "Alerts blocked.");
+                });
+            }
+        }
 
-  <div class="trend-card">
-    <div class="trend-label">Soil moisture — this session</div>
-    <svg id="trendSvg" width="100%" height="56" viewBox="0 0 600 56" preserveAspectRatio="none"></svg>
-  </div>
+        async function fetchLatest() {
+            try {
+                const res = await fetch(FIREBASE_URL + "/sensor.json");
+                if (!res.ok) throw new Error("Bad response");
+                const data = await res.json();
+                if (!data) throw new Error("No data yet");
+                
+                updateUI(data);
+                
+                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]";
+                document.getElementById("ui_status_text").textContent = "Live Connected";
+            } catch (e) {
+                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-red-400";
+                document.getElementById("ui_status_text").textContent = "Offline";
+            }
+        }
 
-  <footer id="lastUpdated">Last updated: —</footer>
-</div>
+        async function fetchDecision() {
+            try {
+                const res = await fetch(FIREBASE_URL + "/decision.json");
+                const data = await res.json();
+                if (!data) return;
+                const etc = data.etc_mm_per_day !== undefined ? data.etc_mm_per_day + " mm/day" : "";
+                document.getElementById("ui_ai_text").textContent = data.recommendation + (etc ? " (ETc: " + etc + ")" : "");
+                document.getElementById("ui_ai_meta").textContent = "Last Sync: " + (data.computed_at || "—");
+            } catch (e) {
+                console.log("Waiting for AI data...");
+            }
+        }
 
-<script>
-  const FIREBASE_URL = "https://smart-irrigation-fydp-default-rtdb.firebaseio.com";
-  const history = [];
-  const MAX_POINTS = 30;
-  const ALERT_THRESHOLD = 20;
-  const ALERT_COOLDOWN_MS = 5 * 60 * 1000;
-  let lastAlertTime = 0;
+        function updateUI(data) {
+            const moisture = Number(data.soil_moisture ?? 0);
+            const temp = Number(data.temperature ?? 0);
+            const humidity = Number(data.humidity ?? 0);
+            const pumpOn = data.pump_status === 1 || data.pump_status === true;
 
-  // Register service worker so this qualifies as an installable PWA
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
+            // Update Sensor Values
+            document.getElementById("ui_moisture").textContent = moisture.toFixed(1);
+            document.getElementById("ui_moisture_bar").style.width = Math.min(moisture, 100) + "%";
+            document.getElementById("ui_temp").textContent = temp.toFixed(1);
+            document.getElementById("ui_humidity").textContent = humidity.toFixed(1);
 
-  function updateBellButton() {
-    const btn = document.getElementById('bellBtn');
-    if (!('Notification' in window)) { btn.style.display = 'none'; return; }
-    if (Notification.permission === 'granted') {
-      btn.textContent = '🔔 Alerts enabled on this device';
-      btn.classList.add('on');
-    } else {
-      btn.textContent = '🔔 Enable alerts on this device';
-      btn.classList.remove('on');
-    }
-  }
+            // Update Pump Card UI
+            const pumpCard = document.getElementById("ui_pump_card");
+            const pumpText = document.getElementById("ui_pump_status");
+            const pumpIcon = document.getElementById("ui_pump_icon");
 
-  function enableNotifications() {
-    if (!('Notification' in window)) return;
-    Notification.requestPermission().then(updateBellButton);
-  }
+            if (pumpOn) {
+                pumpCard.className = "bg-[#1C883A] text-white p-4 rounded-xl flex justify-between items-center shadow-md transition-all duration-300";
+                pumpText.textContent = "Irrigation: ON";
+                pumpIcon.className = "fa-solid fa-circle-check text-2xl";
+            } else {
+                pumpCard.className = "bg-gray-100 text-gray-500 border border-gray-200 p-4 rounded-xl flex justify-between items-center transition-all duration-300";
+                pumpText.textContent = "Irrigation: OFF";
+                pumpIcon.className = "fa-solid fa-circle-xmark text-2xl opacity-50";
+            }
 
-  function maybeNotify(moisture) {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    if (moisture >= ALERT_THRESHOLD) return;
-    const now = Date.now();
-    if (now - lastAlertTime < ALERT_COOLDOWN_MS) return;
-    lastAlertTime = now;
-    new Notification('Smart Irrigation — Low Moisture', {
-      body: `Soil moisture is critically low: ${moisture.toFixed(1)}%`,
-      icon: 'icon.png',
-    });
-  }
+            // Local Decision Logic
+            const needsWater = moisture < 45 || temp > 35 || humidity < 30;
+            const decisionText = document.getElementById("ui_decision_text");
+            if (needsWater) {
+                decisionText.textContent = "⚠️ Critical conditions detected. Irrigation required.";
+                decisionText.className = "text-sm font-bold text-orange-600";
+            } else {
+                decisionText.textContent = "✅ Conditions are optimal. No action needed.";
+                decisionText.className = "text-sm font-bold text-green-600";
+            }
 
-  async function fetchLatest() {
-    try {
-      const res = await fetch(FIREBASE_URL + "/sensor.json");
-      if (!res.ok) throw new Error("Bad response");
-      const data = await res.json();
-      if (!data) throw new Error("No data yet");
-      updateUI(data);
-      document.getElementById("statusDot").classList.remove("offline");
-      document.getElementById("statusText").textContent = "Live";
-    } catch (e) {
-      document.getElementById("statusDot").classList.add("offline");
-      document.getElementById("statusText").textContent = "Offline";
-    }
-  }
+            // Time update
+            document.getElementById("ui_last_updated").textContent = "Last sync: " + new Date().toLocaleTimeString();
 
-  async function fetchDecision() {
-    try {
-      const res = await fetch(FIREBASE_URL + "/decision.json");
-      const data = await res.json();
-      if (!data) return;
-      const etc = data.etc_mm_per_day !== undefined ? data.etc_mm_per_day + " mm/day" : "";
-      document.getElementById("aiRecommendation").textContent =
-        data.recommendation + (etc ? " · ETc " + etc : "");
-      document.getElementById("aiMeta").textContent = "Computed: " + (data.computed_at || "—");
-    } catch (e) {
-      // AI decision not uploaded yet — leave the placeholder text as-is
-    }
-  }
+            // ==========================================
+            // ALARM & NOTIFICATION TRIGGER
+            // ==========================================
+            let currentStatusNum = pumpOn ? 1 : 0;
+            if (previousPumpStatus === 0 && currentStatusNum === 1) {
+                // Play audio
+                alarmSound.play().catch(e => console.log("Audio blocked by browser. Tap screen once to allow."));
+                // Show notification
+                if (Notification.permission === "granted") {
+                    new Notification("Smart Irrigation Alert 💧", {
+                        body: "Water pump has been turned ON automatically!",
+                        icon: "icon.png"
+                    });
+                }
+            }
+            previousPumpStatus = currentStatusNum;
+        }
 
-  function updateUI(data) {
-    const moisture = Number(data.soil_moisture ?? 0);
-    const temp = Number(data.temperature ?? 0);
-    const humidity = Number(data.humidity ?? 0);
-    const pumpOn = data.pump_status === 1 || data.pump_status === true;
+        // Start polling
+        function poll() {
+            fetchLatest();
+            fetchDecision();
+        }
+        poll();
+        setInterval(poll, 5000);
+    </script>
 
-    document.getElementById("moistureVal").childNodes[0].nodeValue = moisture.toFixed(1);
-    document.getElementById("tempVal").childNodes[0].nodeValue = temp.toFixed(1);
-    document.getElementById("humidityVal").childNodes[0].nodeValue = humidity.toFixed(1);
+    <!-- ========================================== -->
+    <!-- SCRIPT 2: FIREBASE CLOUD MESSAGING (FCM) -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
 
-    const pumpCard = document.getElementById("pumpCard");
-    const pumpState = document.getElementById("pumpState");
-    const pumpGlow = document.getElementById("pumpGlow");
-    pumpCard.classList.toggle("on", pumpOn);
-    pumpGlow.classList.toggle("on", pumpOn);
-    pumpState.textContent = pumpOn ? "ON" : "OFF";
-    pumpState.classList.toggle("on", pumpOn);
-    pumpState.classList.toggle("off", !pumpOn);
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoi8LQllyFmUfEl1wyf7RBlNh_iRMk8vs",
+            authDomain: "smart-irrigation-fydp.firebaseapp.com",
+            databaseURL: "https://smart-irrigation-fydp-default-rtdb.firebaseio.com",
+            projectId: "smart-irrigation-fydp",
+            storageBucket: "smart-irrigation-fydp.firebasestorage.app",
+            messagingSenderId: "789342675641",
+            appId: "1:789342675641:web:c6e129b459071863bf7168"
+        };
 
-    const needsWater = moisture < 45 || temp > 35 || humidity < 30;
-    const banner = document.getElementById("decisionBanner");
-    banner.classList.toggle("alert", needsWater);
-    document.getElementById("decisionText").textContent = needsWater
-      ? "Conditions need irrigation"
-      : "Conditions are fine, no irrigation needed";
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+        const db = getDatabase(app);
 
-    document.getElementById("lastUpdated").textContent = "Last updated: " + new Date().toLocaleTimeString();
+        // Service Worker Registration for PWA & FCM
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then((registration) => {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        getToken(messaging, { 
+                            vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4",
+                            serviceWorkerRegistration: registration 
+                        }).then((currentToken) => {
+                            if (currentToken) {
+                                console.log('FCM Token Generated!');
+                                const tokenKey = currentToken.replace(/[\.#\$\[\]]/g, "_");
+                                set(ref(db, 'fcm_tokens/' + tokenKey), true);
+                            }
+                        });
+                    }
+                });
+            });
+        }
 
-    history.push(moisture);
-    if (history.length > MAX_POINTS) history.shift();
-    drawTrend();
-
-    maybeNotify(moisture);
-  }
-
-  function drawTrend() {
-    const svg = document.getElementById("trendSvg");
-    if (history.length < 2) { svg.innerHTML = ""; return; }
-    const w = 600, h = 56, pad = 6;
-    const max = Math.max(...history, 100);
-    const min = Math.min(...history, 0);
-    const range = Math.max(max - min, 1);
-    const step = (w - pad * 2) / (MAX_POINTS - 1);
-    const startX = w - pad - (history.length - 1) * step;
-    let points = "";
-    history.forEach((v, i) => {
-      const x = startX + i * step;
-      const y = h - pad - ((v - min) / range) * (h - pad * 2);
-      points += x + "," + y + " ";
-    });
-    svg.innerHTML = '<polyline points="' + points.trim() +
-      '" fill="none" stroke="#4FBFC7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
-  }
-
-  function poll() {
-    fetchLatest();
-    fetchDecision();
-  }
-
-  updateBellButton();
-  poll();
-  setInterval(poll, 5000);
-</script>
-</body><script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBoi8LQllyFmUfEl1wyf7RBlNh_iRMk8vs",
-    authDomain: "smart-irrigation-fydp.firebaseapp.com",
-    databaseURL: "https://smart-irrigation-fydp-default-rtdb.firebaseio.com",
-    projectId: "smart-irrigation-fydp",
-    storageBucket: "smart-irrigation-fydp.firebasestorage.app",
-    messagingSenderId: "789342675641",
-    appId: "1:789342675641:web:c6e129b459071863bf7168"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const messaging = getMessaging(app);
-// Database aur Token save karne ka code
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-const db = getDatabase(app);
-
-getToken(messaging, { 
-  vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4"
-}).then((currentToken) => {
-  if (currentToken) {
-    console.log('Push Token Generated:', currentToken);
-    const tokenKey = currentToken.replace(/[\.#\$\[\]]/g, "_");
-    set(ref(db, 'fcm_tokens/' + tokenKey), true);
-  }
-}).catch((err) => {
-  console.log('An error occurred while retrieving token. ', err);
-});
-  // Notification Permission aur Setup
-  navigator.serviceWorker.register('sw.js').then((registration) => {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        getToken(messaging, { 
-          vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4",
-          serviceWorkerRegistration: registration 
-        }).then((currentToken) => {
-          if (currentToken) {
-            console.log('Push Token Generated Successfully!');
-          }
+        // Listen for foreground messages
+        onMessage(messaging, (payload) => {
+            alert("Smart Irrigation Update: \n" + payload.notification.body);
         });
-      }
-    });
-  });
-
-  // Jab app open ho aur notification aaye
-  onMessage(messaging, (payload) => {
-    alert("Smart Irrigation Alert: \n" + payload.notification.body);
-  });
-</script><script>
-  // 1. Notification Permission mangna jab app khule
-  if ("Notification" in window) {
-    Notification.requestPermission();
-  }
-
-  // 2. Alarm Sound ke liye audio object
-  const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-
-  let previousPumpStatus = null;
-
-  // Database se pump_status par nazar rakhna (Frontend Realtime Listener)
-  firebase.database().ref('/sensor/pump_status').on('value', (snapshot) => {
-    const currentStatus = snapshot.val();
-    const timeString = new Date().toLocaleTimeString();
-
-    // Check karein ke pump 0 se 1 (ON) huwa hai ya nahi
-    if (previousPumpStatus === 0 && currentStatus === 1) {
-      
-      // Feature A: Phone Notification pop-up
-      if (Notification.permission === "granted") {
-        new Notification("Smart Irrigation Alert 💧", {
-          body: "Water pump has been turned ON automatically!",
-          icon: "icon.png"
-        });
-      }
-
-      // Feature B: Audio Alert Sound play karna
-      alarmSound.play().catch(e => console.log("Audio play blocked by browser:", e));
-
-      // Feature C: App ke andar history/log update karna
-      addLogToUI(`Pump turned ON at ${timeString}`);
-    }
-
-    previousStatus = currentStatus;
-  });
-
-  // Helper function UI par log dikhane ke liye
-  function addLogToUI(message) {
-    console.log(message);
-  }
-</script>
+    </script>
+</body>
 </html>
