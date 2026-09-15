@@ -3,8 +3,8 @@
   "short_name": "Irrigation",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#10160F",
-  "theme_color": "#10160F",
+ "background_color": "#F8FAFC",
+"theme_color": "#2E7D32",
   "icons": [
     { "src": "icon.png", "sizes": "512x512", "type": "image/png" },
     { "src": "icon.png", "sizes": "192x192", "type": "image/png" }
