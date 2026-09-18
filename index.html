@@ -99,8 +99,8 @@
             <div class="flex justify-between items-center mb-4">
                 <span class="text-gray-600 text-sm font-medium">Operation Mode:</span>
                 <select id="modeSelect" onchange="updateControlMode()" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1C883A] focus:border-[#1C883A] block p-2 outline-none">
-                    <option value="AUTO">🤖 Auto Mode</option>
-                    <option value="MANUAL">🖐️ Manual Mode</option>
+                    <option value="AUTO">Auto Mode</option>
+                    <option value="MANUAL">Manual Mode</option>
                 </select>
             </div>
 
@@ -314,7 +314,7 @@
             const decisionText = document.getElementById("ui_decision_text");
             
             if (currentMode === "MANUAL") {
-                decisionText.textContent = "🖐️ System is currently running in Manual Override Mode.";
+                decisionText.textContent = "System is currently running in Manual Override Mode.";
                 decisionText.className = "text-sm font-bold text-blue-600";
             } else if (needsWater) {
                 decisionText.textContent = "⚠️ Critical conditions detected. Irrigation required.";
