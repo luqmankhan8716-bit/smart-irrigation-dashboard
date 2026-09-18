@@ -26,7 +26,7 @@
 
     <!-- Top Header -->
     <div class="bg-[#1C883A] text-white p-5 rounded-b-3xl shadow-md flex justify-between items-center relative overflow-hidden">
-        <!-- Abstract background pattern (Optional for pro look) -->
+        <!-- Abstract background pattern -->
         <div class="absolute top-0 right-0 opacity-10">
             <i class="fa-solid fa-leaf text-8xl -mr-4 -mt-4"></i>
         </div>
@@ -90,6 +90,28 @@
             </div>
         </div>
 
+        <!-- NEW: SYSTEM CONTROL CARD (Manual Override) -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mt-4">
+            <h3 class="text-gray-800 font-bold text-sm mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-[#1C883A]"></i> System Control
+            </h3>
+            
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-600 text-sm font-medium">Operation Mode:</span>
+                <select id="modeSelect" onchange="updateControlMode()" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1C883A] focus:border-[#1C883A] block p-2 outline-none">
+                    <option value="AUTO">🤖 Auto Mode</option>
+                    <option value="MANUAL">🖐️ Manual Mode</option>
+                </select>
+            </div>
+
+            <div class="flex justify-between items-center transition-all duration-300" id="pumpControlRow">
+                <span class="text-gray-600 text-sm font-medium">Manual Pump:</span>
+                <button id="pumpBtn" onclick="toggleManualPump()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors duration-300">
+                    Turn ON
+                </button>
+            </div>
+        </div>
+
         <!-- Live System Decision (Local) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-4">
             <p class="text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-2">
@@ -98,7 +120,7 @@
             <p class="text-sm font-bold text-gray-700" id="ui_decision_text">Waiting for sensor data...</p>
         </div>
 
-        <!-- AI Smart Engine Card (NEW PREMIUM DESIGN) -->
+        <!-- AI Smart Engine Card -->
         <div class="bg-white p-5 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-green-100 mt-5 relative overflow-hidden">
             
             <!-- Soft glowing background effect -->
@@ -161,6 +183,10 @@
         const alarmSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         let previousPumpStatus = null;
 
+        // Variables for Manual Control
+        let currentMode = "AUTO";
+        let currentPump = "OFF";
+
         // Ask for notification permission on load
         if ("Notification" in window && Notification.permission !== "granted") {
             Notification.requestPermission();
@@ -173,6 +199,61 @@
                 });
             }
         }
+
+        // --- NEW: MANUAL CONTROL FUNCTIONS ---
+        function fetchControlStatus() {
+            fetch(FIREBASE_URL + "/control.json")
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        currentMode = data.mode || "AUTO";
+                        currentPump = data.pump || "OFF";
+                        document.getElementById("modeSelect").value = currentMode;
+                        refreshControlUI();
+                    }
+                }).catch(e => console.log("Error loading control status"));
+        }
+
+        function updateControlMode() {
+            currentMode = document.getElementById("modeSelect").value;
+            refreshControlUI();
+            sendControlToFirebase();
+        }
+
+        function toggleManualPump() {
+            currentPump = (currentPump === "OFF") ? "ON" : "OFF";
+            refreshControlUI();
+            sendControlToFirebase();
+        }
+
+        function refreshControlUI() {
+            const pumpRow = document.getElementById("pumpControlRow");
+            const pumpBtn = document.getElementById("pumpBtn");
+
+            if (currentMode === "AUTO") {
+                pumpRow.classList.add("opacity-50", "pointer-events-none");
+                pumpBtn.innerText = "Locked (Auto)";
+                pumpBtn.className = "bg-gray-400 text-white font-bold py-2 px-6 rounded-lg shadow-sm";
+            } else {
+                pumpRow.classList.remove("opacity-50", "pointer-events-none");
+                if (currentPump === "ON") {
+                    pumpBtn.innerText = "Turn OFF";
+                    pumpBtn.className = "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors duration-300";
+                } else {
+                    pumpBtn.innerText = "Turn ON";
+                    pumpBtn.className = "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors duration-300";
+                }
+            }
+        }
+
+        function sendControlToFirebase() {
+            fetch(FIREBASE_URL + "/control.json", {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: currentMode, pump: currentPump })
+            });
+        }
+        // -------------------------------------
 
         async function fetchLatest() {
             try {
@@ -197,10 +278,7 @@
                 const data = await res.json();
                 if (!data) return;
                 
-                // Update AI Box Text
                 document.getElementById("ui_ai_text").textContent = data.recommendation;
-                
-                // Update Last Sync Time
                 document.getElementById("ui_ai_meta").textContent = "Sync: " + (data.computed_at || "—");
             } catch (e) {
                 console.log("Waiting for AI data...");
@@ -213,13 +291,11 @@
             const humidity = Number(data.humidity ?? 0);
             const pumpOn = data.pump_status === 1 || data.pump_status === true;
 
-            // Update Sensor Values
             document.getElementById("ui_moisture").textContent = moisture.toFixed(1);
             document.getElementById("ui_moisture_bar").style.width = Math.min(moisture, 100) + "%";
             document.getElementById("ui_temp").textContent = temp.toFixed(1);
             document.getElementById("ui_humidity").textContent = humidity.toFixed(1);
 
-            // Update Pump Card UI
             const pumpCard = document.getElementById("ui_pump_card");
             const pumpText = document.getElementById("ui_pump_status");
             const pumpIcon = document.getElementById("ui_pump_icon");
@@ -234,10 +310,13 @@
                 pumpIcon.className = "fa-solid fa-circle-xmark text-2xl opacity-50";
             }
 
-            // Local Decision Logic
             const needsWater = moisture < 45 || temp > 35 || humidity < 30;
             const decisionText = document.getElementById("ui_decision_text");
-            if (needsWater) {
+            
+            if (currentMode === "MANUAL") {
+                decisionText.textContent = "🖐️ System is currently running in Manual Override Mode.";
+                decisionText.className = "text-sm font-bold text-blue-600";
+            } else if (needsWater) {
                 decisionText.textContent = "⚠️ Critical conditions detected. Irrigation required.";
                 decisionText.className = "text-sm font-bold text-orange-600";
             } else {
@@ -245,17 +324,11 @@
                 decisionText.className = "text-sm font-bold text-green-600";
             }
 
-            // Time update
             document.getElementById("ui_last_updated").textContent = "Last sync: " + new Date().toLocaleTimeString();
 
-            // ==========================================
-            // ALARM & NOTIFICATION TRIGGER
-            // ==========================================
             let currentStatusNum = pumpOn ? 1 : 0;
             if (previousPumpStatus === 0 && currentStatusNum === 1) {
-                // Play audio
-                alarmSound.play().catch(e => console.log("Audio blocked by browser. Tap screen once to allow."));
-                // Show notification
+                alarmSound.play().catch(e => console.log("Audio blocked by browser."));
                 if (Notification.permission === "granted") {
                     new Notification("Smart Irrigation Alert 💧", {
                         body: "Water pump has been turned ON automatically!",
@@ -266,11 +339,18 @@
             previousPumpStatus = currentStatusNum;
         }
 
-        // Start polling
         function poll() {
             fetchLatest();
             fetchDecision();
+            // Sirf us waqt control status laaye jab koi naya change na ho raha ho
+            if(document.activeElement.id !== 'modeSelect') {
+                fetchControlStatus();
+            }
         }
+        
+        // App khulte hi control ka status load karein
+        fetchControlStatus();
+        
         poll();
         setInterval(poll, 5000);
     </script>
@@ -297,7 +377,6 @@
         const messaging = getMessaging(app);
         const db = getDatabase(app);
 
-        // Service Worker Registration for PWA & FCM
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then((registration) => {
                 Notification.requestPermission().then((permission) => {
@@ -317,7 +396,6 @@
             });
         }
 
-        // Listen for foreground messages
         onMessage(messaging, (payload) => {
             alert("Smart Irrigation Update: \n" + payload.notification.body);
         });
