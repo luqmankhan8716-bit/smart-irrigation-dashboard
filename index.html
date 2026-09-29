@@ -504,7 +504,7 @@
             const pumpOn = data.pump_status === 1 || data.pump_status === true;
 
             document.getElementById("ui_moisture").textContent = moisture.toFixed(1);
-            document.getElementById("ui_moisture_bar"].style.width = Math.min(moisture, 100) + "%";
+            document.getElementById("ui_moisture_bar").style.width = Math.min(moisture, 100) + "%";
             document.getElementById("ui_temp").textContent = temp.toFixed(1);
             document.getElementById("ui_humidity").textContent = humidity.toFixed(1);
 
