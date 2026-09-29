@@ -47,14 +47,38 @@
     <!-- Main Content Area -->
     <div class="p-5 mt-2 space-y-4 max-w-md mx-auto">
 
+        <!-- Crop Selector Card (FAO-56 Integration) -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-green-50 text-[#1C883A] p-2.5 rounded-xl">
+                    <i class="fa-solid fa-seedling text-lg"></i>
+                </div>
+                <div>
+                    <p class="text-gray-400 text-[10px] font-bold uppercase">Selected Crop</p>
+                    <select id="cropSelect" onchange="updateCropSelection()" class="text-gray-800 font-bold text-sm bg-transparent outline-none cursor-pointer">
+                        <option value="Wheat">Wheat (Gandum)</option>
+                        <option value="Maize">Maize (Makai)</option>
+                        <option value="Tomato">Tomato (Tamatar)</option>
+                        <option value="Chilli">Chilli (Mirch)</option>
+                    </select>
+                </div>
+            </div>
+            <span class="text-[10px] font-bold bg-green-100 text-[#1C883A] px-2.5 py-1 rounded-lg">FAO-56</span>
+        </div>
+
         <!-- Soil Moisture Card -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5">
             <div class="text-blue-500 text-4xl w-10 text-center"><i class="fa-solid fa-droplet"></i></div>
             <div class="flex-1">
-                <p class="text-gray-500 text-sm font-medium">Soil Moisture</p>
+                <p class="text-gray-500 text-sm font-medium">Soil Moisture (Silt Loam)</p>
                 <h2 class="text-3xl font-bold text-gray-800"><span id="ui_moisture">--</span><span class="text-lg text-gray-500">%</span></h2>
                 <div class="w-full bg-gray-100 rounded-full h-2 mt-2">
                     <div id="ui_moisture_bar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-gray-400 mt-1 font-semibold">
+                    <span>Wilting: 13%</span>
+                    <span>Pump ON: 15%</span>
+                    <span>Field Cap: 33%</span>
                 </div>
             </div>
         </div>
@@ -97,7 +121,7 @@
             <div class="flex justify-between items-center mb-4">
                 <span class="text-gray-600 text-sm font-medium">Operation Mode:</span>
                 <select id="modeSelect" onchange="updateControlMode()" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-[#1C883A] focus:border-[#1C883A] block p-2 outline-none">
-                    <option value="AUTO">Auto Mode</option>
+                    <option value="AUTO">Auto Mode (AI)</option>
                     <option value="MANUAL">Manual Mode</option>
                 </select>
             </div>
@@ -110,10 +134,10 @@
             </div>
         </div>
 
-        <!-- Live System Decision (Local) -->
+        <!-- Live System Decision (Local Silt Loam Logic) -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-4">
             <p class="text-gray-400 text-xs font-bold uppercase mb-1 flex items-center gap-2">
-                <i class="fa-solid fa-microchip"></i> Local System Decision
+                <i class="fa-solid fa-microchip"></i> Local System Decision (Peshawar Basin)
             </p>
             <p class="text-sm font-bold text-gray-700" id="ui_decision_text">Waiting for sensor data...</p>
         </div>
@@ -215,7 +239,7 @@
                     <div class="bg-red-100 text-red-500 p-2 rounded-lg mt-0.5"><i class="fa-solid fa-droplet-slash"></i></div>
                     <div>
                         <p class="text-sm font-bold text-gray-800">Moisture Critically Low</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Soil moisture dropped below limit. System triggered pump.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Soil moisture dropped below wilting point (15%). System triggered pump.</p>
                         <p class="text-[10px] text-gray-400 mt-1 font-mono">System Log</p>
                     </div>
                 </div>
@@ -224,7 +248,7 @@
                     <div class="bg-green-100 text-[#1C883A] p-2 rounded-lg mt-0.5"><i class="fa-solid fa-pump-soap"></i></div>
                     <div>
                         <p class="text-sm font-bold text-gray-800">Auto-Irrigation Triggered</p>
-                        <p class="text-xs text-gray-500 mt-0.5">Water pump started successfully via AI Logic.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Water pump started successfully via Silt Loam AI Logic.</p>
                         <p class="text-[10px] text-gray-400 mt-1 font-mono">System Log</p>
                     </div>
                 </div>
@@ -256,7 +280,7 @@
                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <div>
                         <p class="font-bold text-sm text-gray-700">Sensor Calibration</p>
-                        <p class="text-[11px] text-gray-500">Auto-adjust soil baseline</p>
+                        <p class="text-[11px] text-gray-500">Silt Loam baseline (13% - 33%)</p>
                     </div>
                     <button class="text-[#1C883A] text-xs font-bold bg-green-100 hover:bg-green-200 transition-colors px-3 py-1.5 rounded-lg border border-green-200">
                         Calibrate
@@ -268,7 +292,7 @@
                         <p class="font-bold text-sm text-gray-700">App Version</p>
                         <p class="text-[11px] text-gray-500">FYDP Release Build</p>
                     </div>
-                    <span class="text-gray-400 text-xs font-bold bg-gray-200 px-2 py-1 rounded">v1.0.0</span>
+                    <span class="text-gray-400 text-xs font-bold bg-gray-200 px-2 py-1 rounded">v2.0.0</span>
                 </div>
             </div>
 
@@ -303,6 +327,7 @@
         let previousPumpStatus = null;
         let currentMode = "AUTO";
         let currentPump = "OFF";
+        let selectedCrop = "Wheat";
 
         function toggleAlerts() {
             const modal = document.getElementById("alertsModal");
@@ -345,7 +370,9 @@
                     if (data) {
                         currentMode = data.mode || "AUTO";
                         currentPump = data.pump || "OFF";
+                        selectedCrop = data.crop || "Wheat";
                         document.getElementById("modeSelect").value = currentMode;
+                        document.getElementById("cropSelect").value = selectedCrop;
                         refreshControlUI();
                     }
                 }).catch(e => console.log("Error loading control status"));
@@ -354,6 +381,11 @@
         function updateControlMode() {
             currentMode = document.getElementById("modeSelect").value;
             refreshControlUI();
+            sendControlToFirebase();
+        }
+
+        function updateCropSelection() {
+            selectedCrop = document.getElementById("cropSelect").value;
             sendControlToFirebase();
         }
 
@@ -387,7 +419,7 @@
             fetch(FIREBASE_URL + "/control.json", {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: currentMode, pump: currentPump })
+                body: JSON.stringify({ mode: currentMode, pump: currentPump, crop: selectedCrop })
             });
         }
 
@@ -446,17 +478,18 @@
                 pumpIcon.className = "fa-solid fa-circle-xmark text-2xl opacity-50";
             }
 
-            const needsWater = moisture < 45 || temp > 35 || humidity < 30;
+            // Silt Loam thresholds (15% ON, 33% OFF)
+            const needsWater = moisture <= 15 || temp > 35 || humidity < 30;
             const decisionText = document.getElementById("ui_decision_text");
             
             if (currentMode === "MANUAL") {
                 decisionText.textContent = "System is currently running in Manual Override Mode.";
                 decisionText.className = "text-sm font-bold text-blue-600";
             } else if (needsWater) {
-                decisionText.textContent = "⚠️ Critical conditions detected. Irrigation required.";
+                decisionText.textContent = "⚠️ Silt Loam threshold reached (<15%). Irrigation required.";
                 decisionText.className = "text-sm font-bold text-orange-600";
             } else {
-                decisionText.textContent = "✅ Conditions are optimal. No action needed.";
+                decisionText.textContent = "✅ Soil moisture is within optimal range (up to 33%).";
                 decisionText.className = "text-sm font-bold text-green-600";
             }
 
@@ -467,7 +500,7 @@
                 alarmSound.play().catch(e => console.log("Audio blocked"));
                 if (Notification.permission === "granted") {
                     new Notification("Smart Irrigation Alert 💧", {
-                        body: "Water pump has been turned ON automatically!",
+                        body: "Water pump has been turned ON automatically for " + selectedCrop + "!",
                         icon: "icon.png"
                     });
                 }
@@ -478,7 +511,7 @@
         function poll() {
             fetchLatest();
             fetchDecision();
-            if(document.activeElement.id !== 'modeSelect') {
+            if(document.activeElement.id !== 'modeSelect' && document.activeElement.id !== 'cropSelect') {
                 fetchControlStatus();
             }
         }
@@ -486,44 +519,6 @@
         fetchControlStatus();
         poll();
         setInterval(poll, 5000);
-    </script>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBoi8LQllyFmUfEl1wyf7RBlNh_iRMk8vs",
-            authDomain: "smart-irrigation-fydp.firebaseapp.com",
-            databaseURL: "https://smart-irrigation-fydp-default-rtdb.firebaseio.com",
-            projectId: "smart-irrigation-fydp",
-            storageBucket: "smart-irrigation-fydp.firebasestorage.app",
-            messagingSenderId: "789342675641",
-            appId: "1:789342675641:web:c6e129b459071863bf7168"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const messaging = getMessaging(app);
-        const db = getDatabase(app);
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then((registration) => {
-                Notification.requestPermission().then((permission) => {
-                    if (permission === 'granted') {
-                        getToken(messaging, { 
-                            vapidKey: "BEtNc-D7ZNs4b6d19zPmmphBymn6Hm_o1djfP_yosorZb-wrtidAXmjxgpCHkCa1K1tAT_vWn1KKWehJun0Gbc4",
-                            serviceWorkerRegistration: registration 
-                        }).then((currentToken) => {
-                            if (currentToken) {
-                                const tokenKey = currentToken.replace(/[\.#\$\[\]]/g, "_");
-                                set(ref(db, 'fcm_tokens/' + tokenKey), true);
-                            }
-                        });
-                    }
-                });
-            });
-        }
     </script>
 </body>
 </html>
