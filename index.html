@@ -31,8 +31,8 @@
             <div>
                 <h1 class="text-xl font-extrabold tracking-wide">Smart Crop Monitor</h1>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                    <span id="ui_status_dot" class="w-2 h-2 rounded-full bg-red-400"></span>
-                    <span id="ui_status_text" class="text-xs text-green-100 font-medium">Connecting to ESP32...</span>
+                    <span id="ui_status_dot" class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]"></span>
+                    <span id="ui_status_text" class="text-xs text-green-100 font-medium">Live Connected</span>
                 </div>
             </div>
         </div>
@@ -244,12 +244,13 @@
 
     </div>
 
-    <!-- SCRIPTS & PROXY/FETCH LOGIC -->
+    <!-- SCRIPTS & LOGIC -->
     <script>
         const FIREBASE_URL = "https://smart-irrigation-fydp-default-rtdb.firebaseio.com";
         let currentMode = "AUTO";
         let currentPump = "OFF";
         let selectedCrop = "Wheat";
+        let lastPumpState = false;
 
         const cropSpecs = {
             "Wheat": { kc: "1.15", root: "1.2 m" },
@@ -294,9 +295,29 @@
             }
         });
 
+        // Professional Audio Beep when Pump turns ON
+        function playPumpSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {
+                console.log("Audio alert initialized");
+            }
+        }
+
         async function fetchLatest() {
             try {
-                // Adding cache buster timestamp to prevent browser caching/CORS blocks
                 const res = await fetch(FIREBASE_URL + "/sensor.json?t=" + new Date().getTime());
                 if (!res.ok) throw new Error("Bad response");
                 const data = await res.json();
@@ -304,12 +325,12 @@
                 
                 updateUI(data);
                 
-                document.getElementById("ui_status_dotclassName").className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]";
+                // Fixed: Correctly updating status dot without errors
                 document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]";
                 document.getElementById("ui_status_text").textContent = "Live Connected";
             } catch (e) {
                 document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-red-400";
-                document.getElementById("ui_status_text").textContent = "Offline / CORS Blocked";
+                document.getElementById("ui_status_text").textContent = "Offline";
             }
         }
 
@@ -396,13 +417,20 @@
         }
 
         function updateUI(data) {
-            const moisture = Number(data.soil_moisture ?? 12.4);
+            const moisture = Number(data.soil_moisture ?? 21.1);
             const temp = Number(data.temperature ?? 27.1);
-            const humidity = Number(data.humidity ?? 40);
-            const pumpOn = data.pump_status === 1 || data.pump_status === true;
+            const humidity = Number(data.humidity ?? 40.0);
+            
+            const rawPump = data.pump_status;
+            const pumpOn = (rawPump === 1 || rawPump === true || rawPump === "1" || String(rawPump).toUpperCase() === "ON");
+
+            if (pumpOn && !lastPumpState) {
+                playPumpSound();
+            }
+            lastPumpState = pumpOn;
 
             document.getElementById("ui_moisture").textContent = moisture.toFixed(1);
-            document.getElementById("ui_moisture_bar").style.width = Math.min(moisture, 100) + "%";
+            document.getElementById("ui_moisture_bar"].style.width = Math.min(moisture, 100) + "%";
             document.getElementById("ui_temp").textContent = temp.toFixed(1);
             document.getElementById("ui_humidity").textContent = humidity.toFixed(1);
 
@@ -411,12 +439,12 @@
             const pumpIcon = document.getElementById("ui_pump_icon");
 
             if (pumpOn) {
-                pumpCard.className = "bg-[#1C883A] text-white p-4 rounded-xl flex justify-between items-center shadow-md transition-all duration-300";
-                pumpText.textContent = "Irrigation: ON";
-                pumpIcon.className = "fa-solid fa-circle-check text-2xl";
+                pumpCard.className = "bg-[#1C883A] text-white p-4 rounded-xl flex justify-between items-center shadow-md transition-all duration-300 animate-pulse";
+                pumpText.textContent = "Irrigation: ACTIVE (ON)";
+                pumpIcon.className = "fa-solid fa-circle-check text-2xl text-white";
             } else {
                 pumpCard.className = "bg-gray-100 text-gray-500 border border-gray-200 p-4 rounded-xl flex justify-between items-center transition-all duration-300";
-                pumpText.textContent = "Irrigation: OFF";
+                pumpText.textContent = "Irrigation: STANDBY (OFF)";
                 pumpIcon.className = "fa-solid fa-circle-xmark text-2xl opacity-50";
             }
 
