@@ -17,6 +17,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Firebase App & Database SDKs (Fixes CORS / Connection Issues) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { display: none; }
@@ -320,9 +324,15 @@
         </div>
     </div>
 
-    <!-- SCRIPTS & CHART.JS LOGIC -->
+    <!-- FIREBASE SDK & LIVE REAL-TIME LOGIC -->
     <script>
-        const FIREBASE_URL = "https://smart-irrigation-fydp-default-rtdb.firebaseio.com";
+        // Firebase Configuration
+        const firebaseConfig = {
+            databaseURL: "https://smart-irrigation-fydp-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let currentMode = "AUTO";
         let currentPump = "OFF";
         let selectedCrop = "Wheat";
@@ -370,67 +380,69 @@
             }
         });
 
-        function toggleAlerts() {
-            const modal = document.getElementById("alertsModal");
-            const content = document.getElementById("alertsContent");
-            if (modal.classList.contains("hidden")) {
-                modal.classList.remove("hidden");
-                setTimeout(() => { modal.classList.remove("opacity-0"); content.classList.remove("translate-y-full"); }, 10);
+        // Real-time Sensor Listener
+        db.ref('sensor').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                updateUI(data);
+                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]";
+                document.getElementById("ui_status_text").textContent = "Live Connected";
             } else {
-                modal.classList.add("opacity-0");
-                content.classList.add("translate-y-full");
-                setTimeout(() => { modal.classList.add("hidden"); }, 300); 
+                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-red-400";
+                document.getElementById("ui_status_text").textContent = "No Data Found";
             }
-        }
+        }, (error) => {
+            document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-red-400";
+            document.getElementById("ui_status_text").textContent = "Connection Error";
+        });
 
-        function toggleSettings() {
-            const modal = document.getElementById("settingsModal");
-            const content = document.getElementById("settingsContent");
-            if (modal.classList.contains("hidden")) {
-                modal.classList.remove("hidden");
-                setTimeout(() => { modal.classList.remove("opacity-0"); content.classList.remove("translate-y-full"); }, 10);
-            } else {
-                modal.classList.add("opacity-0");
-                content.classList.add("translate-y-full");
-                setTimeout(() => { modal.classList.add("hidden"); }, 300); 
+        // Real-time Decision Listener
+        db.ref('decision').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById("ui_ai_text").textContent = data.recommendation || "Awaiting data...";
+                document.getElementById("ui_ai_meta").textContent = (data.computed_at || "—");
             }
-        }
+        });
 
-        function updateCropParameters() {
+        // Real-time Control Listener
+        db.ref('control').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data && document.activeElement.id !== 'modeSelect' && document.activeElement.id !== 'cropSelect') {
+                currentMode = data.mode || "AUTO";
+                currentPump = data.pump || "OFF";
+                selectedCrop = data.crop || "Wheat";
+                document.getElementById("modeSelect").value = currentMode;
+                document.getElementById("cropSelect").value = selectedCrop;
+                updateCropParametersUI();
+                refreshControlUI();
+            }
+        });
+
+        function updateCropParametersUI() {
             selectedCrop = document.getElementById("cropSelect").value;
             if (cropSpecs[selectedCrop]) {
                 document.getElementById("crop_kc_val").textContent = cropSpecs[selectedCrop].kc;
                 document.getElementById("crop_root_val").textContent = cropSpecs[selectedCrop].root;
             }
-            sendControlToFirebase();
         }
 
-        function fetchControlStatus() {
-            fetch(FIREBASE_URL + "/control.json")
-                .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        currentMode = data.mode || "AUTO";
-                        currentPump = data.pump || "OFF";
-                        selectedCrop = data.crop || "Wheat";
-                        document.getElementById("modeSelect").value = currentMode;
-                        document.getElementById("cropSelect").value = selectedCrop;
-                        updateCropParameters();
-                        refreshControlUI();
-                    }
-                }).catch(e => console.log("Error loading control status"));
+        function updateCropParameters() {
+            selectedCrop = document.getElementById("cropSelect").value;
+            updateCropParametersUI();
+            db.ref('control').update({ mode: currentMode, pump: currentPump, crop: selectedCrop });
         }
 
         function updateControlMode() {
             currentMode = document.getElementById("modeSelect").value;
             refreshControlUI();
-            sendControlToFirebase();
+            db.ref('control').update({ mode: currentMode, pump: currentPump, crop: selectedCrop });
         }
 
         function toggleManualPump() {
             currentPump = (currentPump === "OFF") ? "ON" : "OFF";
             refreshControlUI();
-            sendControlToFirebase();
+            db.ref('control').update({ mode: currentMode, pump: currentPump, crop: selectedCrop });
         }
 
         function refreshControlUI() {
@@ -450,44 +462,6 @@
                     pumpBtn.innerText = "Turn ON";
                     pumpBtn.className = "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-colors duration-300";
                 }
-            }
-        }
-
-        function sendControlToFirebase() {
-            fetch(FIREBASE_URL + "/control.json", {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: currentMode, pump: currentPump, crop: selectedCrop })
-            });
-        }
-
-        async function fetchLatest() {
-            try {
-                const res = await fetch(FIREBASE_URL + "/sensor.json");
-                if (!res.ok) throw new Error("Bad response");
-                const data = await res.json();
-                if (!data) throw new Error("No data yet");
-                
-                updateUI(data);
-                
-                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]";
-                document.getElementById("ui_status_text").textContent = "Live Connected";
-            } catch (e) {
-                document.getElementById("ui_status_dot").className = "w-2 h-2 rounded-full bg-red-400";
-                document.getElementById("ui_status_text").textContent = "Offline";
-            }
-        }
-
-        async function fetchDecision() {
-            try {
-                const res = await fetch(FIREBASE_URL + "/decision.json");
-                const data = await res.json();
-                if (!data) return;
-                
-                document.getElementById("ui_ai_text").textContent = data.recommendation;
-                document.getElementById("ui_ai_meta").textContent = (data.computed_at || "—");
-            } catch (e) {
-                console.log("Waiting for data...");
             }
         }
 
@@ -530,17 +504,31 @@
             document.getElementById("ui_last_updated").textContent = "Last sync: " + timeLabel;
         }
 
-        function poll() {
-            fetchLatest();
-            fetchDecision();
-            if(document.activeElement.id !== 'modeSelect' && document.activeElement.id !== 'cropSelect') {
-                fetchControlStatus();
+        function toggleAlerts() {
+            const modal = document.getElementById("alertsModal");
+            const content = document.getElementById("alertsContent");
+            if (modal.classList.contains("hidden")) {
+                modal.classList.remove("hidden");
+                setTimeout(() => { modal.classList.remove("opacity-0"); content.classList.remove("translate-y-full"); }, 10);
+            } else {
+                modal.classList.add("opacity-0");
+                content.classList.add("translate-y-full");
+                setTimeout(() => { modal.classList.add("hidden"); }, 300); 
             }
         }
-        
-        fetchControlStatus();
-        poll();
-        setInterval(poll, 5000);
+
+        function toggleSettings() {
+            const modal = document.getElementById("settingsModal");
+            const content = document.getElementById("settingsContent");
+            if (modal.classList.contains("hidden")) {
+                modal.classList.remove("hidden");
+                setTimeout(() => { modal.classList.remove("opacity-0"); content.classList.remove("translate-y-full"); }, 10);
+            } else {
+                modal.classList.add("opacity-0");
+                content.classList.add("translate-y-full");
+                setTimeout(() => { modal.classList.add("hidden"); }, 300); 
+            }
+        }
     </script>
 </body>
 </html>
