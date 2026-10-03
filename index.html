@@ -295,10 +295,9 @@
             }
         });
 
-        // 1. Audio Context ko global variable bana dein
+        // --- AUDIO ALERT LOGIC (NEW PROFESSIONAL CHIME) ---
         let audioCtx;
 
-        // 2. Audio ko unlock karne ka function (sirf pehle click/touch par chalega)
         function unlockAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -308,32 +307,43 @@
             }
         }
 
-        // 3. User jaise hi dashboard par kahin touch ya click kare, audio unlock ho jaye
+        // Require user interaction to unlock audio policy
         document.body.addEventListener('click', unlockAudio, { once: true });
         document.body.addEventListener('touchstart', unlockAudio, { once: true });
 
-        // 4. Update kiya hua Sound Function
         function playPumpSound() {
             try {
-                if (!audioCtx) unlockAudio(); // Agar context nahi bana toh bana le
+                if (!audioCtx) unlockAudio();
 
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+                function playNote(frequency, startTime, duration) {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = frequency;
+                    
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                }
+
+                const now = audioCtx.currentTime;
                 
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                // Volume thodi increase ki hai (0.1 se 0.5) taake clear sunai de
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.15);
+                // Double Chime
+                playNote(523.25, now, 0.4);       
+                playNote(783.99, now + 0.15, 0.6); 
+
             } catch(e) {
                 console.log("Audio blocked by browser. User needs to interact with the page first.");
             }
         }
+        // --- END AUDIO ALERT LOGIC ---
 
         async function fetchLatest() {
             try {
@@ -341,7 +351,6 @@
                 if (!res.ok) throw new Error("Bad response");
                 const data = await res.json();
                 
-                // Safe parsing with fallbacks so values never stay "--"
                 const moisture = Number(data?.soil_moisture ?? 21.1);
                 const temp = Number(data?.temperature ?? 27.1);
                 const humidity = Number(data?.humidity ?? 40.0);
@@ -434,8 +443,6 @@
             updateCropParametersUI();
             sendControlToFirebase();
         }
-
-        // Removed the dangling `value = document.getElementById("cropSelect").value;` that was outside a function
 
         function updateControlMode() {
             currentMode = document.getElementById("modeSelect").value;
