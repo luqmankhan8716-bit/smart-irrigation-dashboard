@@ -295,15 +295,35 @@
             }
         });
 
+        // 1. Audio Context ko global variable bana dein
+        let audioCtx;
+
+        // 2. Audio ko unlock karne ka function (sirf pehle click/touch par chalega)
+        function unlockAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 3. User jaise hi dashboard par kahin touch ya click kare, audio unlock ho jaye
+        document.body.addEventListener('click', unlockAudio, { once: true });
+        document.body.addEventListener('touchstart', unlockAudio, { once: true });
+
+        // 4. Update kiya hua Sound Function
         function playPumpSound() {
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!audioCtx) unlockAudio(); // Agar context nahi bana toh bana le
+
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                // Volume thodi increase ki hai (0.1 se 0.5) taake clear sunai de
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
@@ -311,7 +331,7 @@
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.15);
             } catch(e) {
-                console.log("Audio alert initialized");
+                console.log("Audio blocked by browser. User needs to interact with the page first.");
             }
         }
 
@@ -415,7 +435,7 @@
             sendControlToFirebase();
         }
 
-        value = document.getElementById("cropSelect").value;
+        // Removed the dangling `value = document.getElementById("cropSelect").value;` that was outside a function
 
         function updateControlMode() {
             currentMode = document.getElementById("modeSelect").value;
